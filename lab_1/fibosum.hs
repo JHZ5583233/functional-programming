@@ -1,0 +1,1 @@
+numberOfFiboSums :: Integer -> Integer
