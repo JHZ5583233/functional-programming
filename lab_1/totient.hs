@@ -1,13 +1,11 @@
 totient :: Integer -> Integer
 totient n
-    | n > 1 = result - div result n
-    | otherwise = result
-    where
-        result = firstLayerOfTotient n 2 n
+    | n <= 1 = n
+    | otherwise = firstLayerOfTotient n 2 n
 
 firstLayerOfTotient :: Integer -> Integer -> Integer -> Integer
 firstLayerOfTotient n p r
-    | p^2 > n = r
+    | p^2 > n = if n > 1 then r - div r n else r
     | mod n p == 0 = firstLayerOfTotient (reduce n p) (p + 1) (r - div r p)
     | otherwise = firstLayerOfTotient n (p + 1) r
 
