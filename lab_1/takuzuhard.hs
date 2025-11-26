@@ -7,12 +7,12 @@ isCorrect s = length (unqiue (concat2 [[y| y <- t, possible s y] | x <- s])) == 
     where
         t = takuzuStrings (length s)
 
-concat2 :: [[a]] -> [a]
+concat2 :: [[String]] -> [String]
 concat2 s
     | null s = []
     | otherwise = head s ++ concat2 (tail s)
 
-unqiue :: [a] -> [a]
+unqiue :: [String] -> [String]
 unqiue s = [x| x <- s, elemNum x s == 1]
 
 possible :: String -> String -> Bool
@@ -22,7 +22,7 @@ possible xs ys
     | head xs == head ys = possible (tail xs) (tail ys)
     | otherwise = False
 
-elemNum ::forall a. Eq a => a -> [a] -> Integer
+elemNum ::String -> [String] -> Integer
 elemNum x s = sum [1 | y <- s, y == x]
 
 takuzuStrings :: Int -> [String]
