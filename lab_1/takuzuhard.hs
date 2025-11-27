@@ -22,7 +22,7 @@ possible xs ys
     | head xs == head ys = possible (tail xs) (tail ys)
     | otherwise = False
 
-elemNum ::String -> [String] -> Integer
+elemNum ::Eq a => a -> [a] -> Integer
 elemNum x s = sum [1 | y <- s, y == x]
 
 takuzuStrings :: Int -> [String]
