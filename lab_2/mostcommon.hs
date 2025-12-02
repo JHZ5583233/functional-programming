@@ -1,19 +1,13 @@
-import Data.List (sortBy, minimumBy, maximumBy)
+import Data.List (group, sort, maximumBy )
 mostCommon :: String -> Char
-mostCommon s =  maximum [fst x | x <- zip u c, snd x == m]
+mostCommon s =  maximum [fst y | y <- zip l c, snd y == m]
     where
-        u = unique s []
-        c = [count x s| x <- u]
+        l = unique s
+        c = [length (filter (== x) s) | x <- unique s]
         m = maximum c
 
-unique :: String -> [Char] -> [Char]
-unique s cs
-    | null s = cs
-    | head s `elem` cs = unique (tail s) cs
-    | otherwise = unique (tail s) (head s : cs)
+unique :: String -> [Char]
+unique s = removeRuns (sort s)
 
-count :: Eq a => a -> [a] -> Integer
-count l ls
-    | null ls = 0
-    | head ls == l = 1 + count l (tail ls)
-    |otherwise = count l (tail ls)
+removeRuns :: String -> String
+removeRuns ss = map head (group ss)
