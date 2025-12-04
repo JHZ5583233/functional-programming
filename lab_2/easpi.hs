@@ -1,3 +1,4 @@
+import Data.List (isSubsequenceOf, isInfixOf)
 -- Infinite list of decimal digits of pi: 3,1,4,1,5,9,...
 piDigits :: [Integer]
 piDigits = digits 1 0 1 1 3 3
@@ -14,16 +15,19 @@ piDigits = digits 1 0 1 1 3 3
         n'' = (q*(7*k + 2) + r*l) `div` (t*l)
 
 neededPiDigits :: Int -> Int
-neededPiDigits n = stupidSol n 1
+neededPiDigits n = stupidSol (toInteger n) (take 1 piDigits)
 
-stupidSol :: Int -> Int -> Int
-stupidSol n x
-    | all  (`elem` take x piDigits) [0..toInteger n] = x
-    | otherwise = stupidSol n (x + 1)
+stupidSol :: Integer -> [Integer] -> Int
+stupidSol n xs
+    | n < 0 = length xs
+    | ns `isInfixOf` xs = stupidSol (n - 1) xs
+    | otherwise = stupidSol n (take ((length xs) + 1) piDigits)
+    where
+      ns = makeList n
 
-subList :: [Integer] -> [Integer] -> Bool
-subList xs ys
-    | null xs = True
-    | null ys = False
-    | head xs == head ys = subList (tail xs) (tail ys)
-    | otherwise = subList xs (tail ys)
+makeList :: Integer -> [Integer]
+makeList x
+  | x < 10 = [x]
+  | otherwise = makeList (div x 10) ++ [m]
+  where
+    m = x `mod` 10
