@@ -11,6 +11,7 @@ import Debug
     T’ -> / F T’
     T’ -> % F T’
     T’ -> <empty string>
+    F -> - F
     F -> ( E )
     F -> <integer>
 -}
@@ -58,12 +59,17 @@ parseT' acc ("%":toks) =
 parseT' acc toks = (acc, toks)
 
 parseF :: Tokens -> (Integer, Tokens)
+parseF ("-":toks) =
+  let (v, toks') = parseF toks
+  in (-v, toks')
+
 parseF [] = abort "error: unexpected end of input."
 parseF ("(":toks) =
   let (v, toks') = parseE toks
   in case toks' of
         (")":rest) -> (v, rest)
         _ -> abort "error: expected ')'"
+
 parseF (tok:toks)
   | all isDigit tok = (read tok, toks)
   | otherwise = abort $ printf "Error, unexpected '%s'." tok
