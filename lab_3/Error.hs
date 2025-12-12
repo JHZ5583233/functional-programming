@@ -9,7 +9,7 @@ abortWithMessage msg = do
 
 printError :: String -> a
 printError msg = unsafePerformIO (abortWithMessage msg)
-  
+
 lexError :: Int -> Char -> a
 lexError linenr ch = printError errmsg
   where errmsg = "Lexical error in line " ++ show linenr ++ ": unexpected character '" ++ [ch] ++ "'."
