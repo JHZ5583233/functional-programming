@@ -1,0 +1,23 @@
+% some facts
+child(john,sue).  % fact saying that sue is a child of john.
+child(john,sam).  % fact saying that sam is a child of john.
+child(jane,sue).  % fact saying that sue is a child of jane.
+male(john).       % fact saying that john is a male.
+male(robert).     % fact saying that robert is male
+% some rules
+parent(Y,X) :- child(X,Y).            % if Y is a child of X, then X is a parent of Y
+father(Y,X) :- child(X,Y), male(X).   % if Y is a child of X and X is a male then X is the father of Y.
+% some queries
+% some queries
+?- child(john,sue).
+?- child(john,john).
+?- child(john,pete).
+?- male(john).
+?- male(robert).
+?- male(jane).
+?- male(eve).
+?- male(X).
+?- child(john,X).
+?- parent(sue,X).
+?- father(X,Y).
+?- child(X,X).
