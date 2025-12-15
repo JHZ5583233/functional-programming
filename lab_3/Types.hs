@@ -9,7 +9,7 @@ data Statement = Fact FuncApplication
                | Rule FuncApplication [FuncApplication]
                | Query FuncApplication
 
-data Program = Program [(Statement,Int)]
+newtype Program = Program [(Statement,Int)]
 
 instance Show Argument where
   show (Const name) = name
@@ -24,7 +24,7 @@ instance Show Statement where
   show (Query fa) = "?- " ++ show fa
 
 instance Show Program where
-  show (Program statements) = concat (map (\(st,line) -> show(line) ++ ":" ++ show(st) ++ "\n") statements)
+  show (Program statements) = concatMap (\(st,line) -> show line ++ ":" ++ show st ++ "\n") statements
 
 -- show a list without enclosing [ ]
 showLst :: Show a => [a] -> String
