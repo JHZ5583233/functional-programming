@@ -4,15 +4,22 @@ import Types
 import Lexer
 import Error
 import Distribution.Simple.Utils (xargs)
+import System.Posix.Internals (lstat)
 
 parseProgram :: String -> Program
 parseProgram input = Program (parseProlog [] (lexer input))
 
 parseProlog :: [(Statement,Int)] -> [(LexToken,Int)] -> [(Statement,Int)]
-parseProlog [] [] = []
+parseProlog ss [] = reverse ss
+
+parseProlog ss ls = parseProlog (statement lls:ss) rs
+    where
+        (_, n) = head ls
+        lls = takeWhile (\x -> snd x == n) ls
+        rs = drop (length lls) ls
 -- implement this yourself
 -------------------------------------------------------------------------------
-{- parser for the following gramar:
+{- parser for the following grammar:
 Prolog         -> Statement Prolog
 Prolog         -> <empty>
 
@@ -48,14 +55,17 @@ parseArgList (x:xs) = argument x : parseArgList xs
 
 args :: [(LexToken,Int)] -> ([Argument], [(LexToken,Int)])
 args [] = ([], [])
-args ((LparTok, _):xs) = (parseArgList (takeWhile (\x -> fst x /= RparTok) xs), r)
+args ((LparTok, _):xs) = (parseArgList as, r)
     where
-        r = tail (dropWhile (\x -> fst x /= RparTok) xs)
+        as = takeWhile (\x -> fst x /= RparTok) xs
+        r = drop (length as) xs
 
-relation :: [(LexToken, Int)] -> (FuncApplication, [(LexToken,Int)])
+relation :: [(LexToken,Int)] -> (FuncApplication, [(LexToken,Int)])
+relation [] = eofError
 relation ((IdentTok x,_):xs) = (FuncApp x as, r)
     where
         (as, r) = args xs
+relation ((_, n):_) = expectedError n "a relation name (i.e. an identifier that start with a lower case letter)"
 
 relationList' :: [(LexToken, Int)] -> ([FuncApplication], [(LexToken,Int)])
 relationList' [] = ([], [])
@@ -68,4 +78,22 @@ relationList ls = (f : ns, rrs)
         (f, rs) = relation ls
         (ns, rrs) = relationList' rs
 
-Statement'
+statement' :: [(LexToken, Int)] -> [FuncApplication]
+statement' [] = eofError
+statement' (x:xs)
+    | fst x == DotTok = []
+    | null ds = expectedError (snd x) "a relation name (i.e. an identifier that start with a lower case letter)"
+    | fst x == FollowsTok = fst (relationList ds)
+    | otherwise = printError "Missing Dot"
+    where
+        ds = takeWhile (\x -> fst x /= DotTok) xs
+
+statement :: [(LexToken, Int)] -> (Statement, Int)
+statement ((QueryTok, i):xs) = (Query (fst (relation (takeWhile (\x -> fst x /= DotTok) xs))), i)
+statement ls
+    | null as = (Fact s, n)
+    | otherwise = (Rule s as, n)
+        where
+            (_, n) = head ls
+            (s, rs) = relation ls
+            as = statement' rs
