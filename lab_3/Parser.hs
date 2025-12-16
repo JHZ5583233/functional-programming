@@ -4,12 +4,12 @@ import Types
 import Lexer
 import Error
 import Distribution.Simple.Utils (xargs)
-import Types (Statement(Query))
 
 parseProgram :: String -> Program
 parseProgram input = Program (parseProlog [] (lexer input))
 
 parseProlog :: [(Statement,Int)] -> [(LexToken,Int)] -> [(Statement,Int)]
+parseProlog [] [] = []
 -- implement this yourself
 -------------------------------------------------------------------------------
 {- parser for the following gramar:
@@ -36,37 +36,36 @@ ArgList'       -> <empty>
 Argument       -> <variable> | <constant>
 -}
 
-parseProlog ss [] = reverse ss
-parseProlog ss ls = parseProlog (s:ss) rls
-    where
-        h = head ls
-        rs = takeWhile (\x -> snd h == snd x) ls
-        pss = h:rs
-        s = parseStatement pss
-        rls = dropWhile (\x -> snd h == snd x) ls
+argument :: (LexToken,Int) -> Argument
+argument (VarTok name, _) = Const name
+argument (IdentTok name, _) = Arg name
+argument (_, _) = printError "Not an argument."
 
-parseStatement :: [(LexToken,Int)] -> (Statement,Int)
-parseStatement (x:xs)
-    | QueryTok <- fst x = (parseQuery (takeWhile (\fs -> fst fs /= DotTok) xs), n)
-    where
-        n = snd x
+parseArgList :: [(LexToken,Int)] -> [Argument]
+parseArgList [] = []
+parseArgList ((CommaTok, _):xs) = parseArgList xs
+parseArgList (x:xs) = argument x : parseArgList xs
 
-parseQuery :: [(LexToken,Int)] -> Statement
-parseQuery xs = Query (FuncApp r as)
+args :: [(LexToken,Int)] -> ([Argument], [(LexToken,Int)])
+args [] = ([], [])
+args ((LparTok, _):xs) = (parseArgList (takeWhile (\x -> fst x /= RparTok) xs), r)
     where
-        (r, as) = parseRelation xs
+        r = tail (dropWhile (\x -> fst x /= RparTok) xs)
 
-parseRelation :: [(LexToken,Int)] -> (String, [Argument])
-parseRelation (l:ls) = (show l, as)
+relation :: [(LexToken, Int)] -> (FuncApplication, [(LexToken,Int)])
+relation ((IdentTok x,_):xs) = (FuncApp x as, r)
     where
-        as = argHelper ls
+        (as, r) = args xs
 
-argHelper :: [(LexToken,Int)] -> [Argument]
-argHelper [] = []
-argHelper (l:ls)
-    | t `elem` [LparTok, CommaTok] = argHelper ls
-    | RparTok <- t = []
-    | IdentTok _ <- t = Const (show t) : argHelper ls
-    | VarTok _ <- t = Arg (show t) : argHelper ls
+relationList' :: [(LexToken, Int)] -> ([FuncApplication], [(LexToken,Int)])
+relationList' [] = ([], [])
+relationList' ((CommaTok, _):xs) = relationList xs
+relationList' i = printError (show i)
+
+relationList :: [(LexToken, Int)] -> ([FuncApplication], [(LexToken,Int)])
+relationList ls = (f : ns, rrs)
     where
-        t = fst l
+        (f, rs) = relation ls
+        (ns, rrs) = relationList' rs
+
+Statement'
