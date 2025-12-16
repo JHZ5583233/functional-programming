@@ -5,6 +5,7 @@ import Lexer
 import Error
 import Distribution.Simple.Utils (xargs)
 import System.Posix.Internals (lstat)
+import Error (expectedError)
 
 parseProgram :: String -> Program
 parseProgram input = Program (parseProlog [] (lexer input))
@@ -55,10 +56,14 @@ parseArgList (x:xs) = argument x : parseArgList xs
 
 args :: [(LexToken,Int)] -> ([Argument], [(LexToken,Int)])
 args [] = ([], [])
-args ((LparTok, _):xs) = (parseArgList as, r)
-    where
-        as = takeWhile (\x -> fst x /= RparTok) xs
-        r = drop (length as) xs
+args ((LparTok, n):xs)
+    | null rs = eofError
+    | null as = expectedError n "a literal"
+    | otherwise = (parseArgList as, tail rs)
+        where
+            as = takeWhile (\x -> fst x /= RparTok) xs
+            rs = dropWhile (\x -> fst x /= RparTok) xs
+args ((_, n):xs) = expectedError n "an opening parenthesis"
 
 relation :: [(LexToken,Int)] -> (FuncApplication, [(LexToken,Int)])
 relation [] = eofError
