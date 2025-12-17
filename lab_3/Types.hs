@@ -11,6 +11,11 @@ data Statement = Fact FuncApplication
 
 newtype Program = Program [(Statement,Int)]
 
+type Substitution = (String, Argument)
+type Unifier = [Substitution]
+type Clause = [(FuncApplication, Bool)]
+type Clauses = [Clause]
+
 instance Show Argument where
   show (Const name) = name
   show (Arg name) = name

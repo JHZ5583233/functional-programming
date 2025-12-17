@@ -47,7 +47,7 @@ Argument       -> <variable> | <constant>
 argument :: (LexToken,Int) -> Argument
 argument (VarTok name, _) = Const name
 argument (IdentTok name, _) = Arg name
-argument (_, _) = printError "Not an argument."
+argument (_, n) = expectedError n "a literal"
 
 parseArgList :: [(LexToken,Int)] -> [Argument]
 parseArgList [] = []
@@ -89,7 +89,7 @@ statement' (x:xs)
     | fst x == DotTok = []
     | null ds = expectedError (snd x) "a relation name (i.e. an identifier that start with a lower case letter)"
     | fst x == FollowsTok = fst (relationList ds)
-    | otherwise = printError "Missing Dot"
+    | otherwise = expectedError (snd x) "a DotTok"
     where
         ds = takeWhile (\x -> fst x /= DotTok) xs
 
