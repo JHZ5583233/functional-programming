@@ -5,7 +5,6 @@ import Lexer
 import Error
 import Distribution.Simple.Utils (xargs)
 import System.Posix.Internals (lstat)
-import Error (expectedError)
 
 parseProgram :: String -> Program
 parseProgram input = Program (parseProlog [] (lexer input))
@@ -45,8 +44,8 @@ Argument       -> <variable> | <constant>
 -}
 
 argument :: (LexToken,Int) -> Argument
-argument (VarTok name, _) = Const name
-argument (IdentTok name, _) = Arg name
+argument (VarTok name, _) = Arg name
+argument (IdentTok name, _) = Const name
 argument (_, n) = expectedError n "a literal"
 
 parseArgList :: [(LexToken,Int)] -> [Argument]

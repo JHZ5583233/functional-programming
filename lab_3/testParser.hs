@@ -4,10 +4,10 @@ import Types
 import Parser
 
 process :: String -> Program
-process str = parseProgram str
+process = parseProgram
 
 main = do
   args <- getArgs
-  let reader = if args == [] then getContents else readFile (head args)
+  let reader = if null args then getContents else readFile (head args)
   text <- reader
   print (process text)

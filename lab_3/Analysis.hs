@@ -37,10 +37,10 @@ functionDefs (Program prog) = (reduce.sort) (funcdefs prog [])
 checkFunctionCall :: Int -> [(String,Int,Int)] -> FuncApplication -> Bool
 checkFunctionCall linenr fdefs (FuncApp fun args) = passTest fdefs
   where
-    passTest [] = False `echo` ("Semantic error: No definition of the relation '" ++ fun ++ "' in line " ++ show(linenr) ++ ".")
+    passTest [] = False `echo` ("Semantic error: No definition of the relation '" ++ fun ++ "' in line " ++ show (linenr) ++ ".")
     passTest ((f,nargs,lnr):fdefs)
       | fun /= f              = passTest fdefs
-      | nargs /= length args  = False `echo` ("Semantic error: Incorrect number of arguments in call of '" ++ fun ++ "' in line " ++ show(linenr) ++ ".")
+      | nargs /= length args  = False `echo` ("Semantic error: Incorrect number of arguments in call of '" ++ fun ++ "' in line " ++ show (linenr) ++ ".")
       | otherwise             = True
 
 checkFunctionCalls :: [(String,Int,Int)] -> Maybe Program -> Maybe Program
@@ -50,9 +50,9 @@ checkFunctionCalls fdefs (Just (Program prog))
   | otherwise     = Nothing
   where
     passTest [] = True
-    passTest ((Fact fa,linenr):prog)          = (checkFunctionCall linenr fdefs fa) && passTest prog
-    passTest ((Query fa,linenr):prog)         = (checkFunctionCall linenr fdefs fa) && passTest prog
-    passTest ((Rule fa premises,linenr):prog) = (and (map (checkFunctionCall linenr fdefs) premises)) && (passTest prog)
+    passTest ((Fact fa,linenr):prog)          = checkFunctionCall linenr fdefs fa && passTest prog
+    passTest ((Query fa,linenr):prog)         = checkFunctionCall linenr fdefs fa && passTest prog
+    passTest ((Rule fa premises,linenr):prog) = all (checkFunctionCall linenr fdefs) premises && passTest prog
 
 checkNumberArgumentsDefs :: [(String,Int,Int)] -> Maybe Program -> Maybe Program
 checkNumberArgumentsDefs _ Nothing = Nothing
@@ -63,7 +63,7 @@ checkNumberArgumentsDefs  fdefs prog
     passTest ((f0,args0,lnr0):(f1,args1,lnr1):rest)
       | f0 /= f1  =  passTest ((f1,args1,lnr1):rest)
       | otherwise = False `echo` ("Semantic error: Number of arguments in definition of the relation '" ++
-                                  f0 ++ "' differs in lines " ++ show(lnr0) ++ " and " ++ show(lnr1) ++ ".")
+                                  f0 ++ "' differs in lines " ++ show lnr0 ++ " and " ++ show lnr1 ++ ".")
     passTest _ = True
 
 checkFacts :: Maybe Program -> Maybe Program
@@ -74,13 +74,13 @@ checkFacts (Just (Program prog))
   where
     passTest [] = True
     passTest ((Fact fa,linenr):prog)
-      | arguments fa == []  = True
-      | otherwise           = False `echo` ("Semantic error: Fact has an argument '" ++ (head (arguments fa)) ++
-                                          "' in line " ++ show(linenr) ++ ".")
+      | null (arguments fa)  = True
+      | otherwise           = False `echo` ("Semantic error: Fact has an argument '" ++ head (arguments fa) ++
+                                          "' in line " ++ show linenr ++ ".")
     passTest (_:prog)     = passTest prog
 
 analyse :: Program -> Program
-analyse prog = sure $ (checkFacts.(checkFunctionCalls fdefs).(checkNumberArgumentsDefs fdefs)) (Just prog)
+analyse prog = sure $ (checkFacts.checkFunctionCalls fdefs.checkNumberArgumentsDefs fdefs) (Just prog)
   where
     fdefs = functionDefs prog
     sure (Just p) = p

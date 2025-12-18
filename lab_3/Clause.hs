@@ -4,14 +4,15 @@ import Types
 import Error
 
 programToClauses :: Program -> Clauses
-programToClauses [] = []
-programToClauses (s:ps) =
-    case s of
-        Query _ ->
-            programToClauses ps
+programToClauses (Program stmts) = concatMap stmtToClause stmts
 
-        Fact f ->
-            [(f, True)] : programToClauses ps
+stmtToClause :: (Statement, Int) -> Clauses
+stmtToClause (Fact f, _) =
+    [[(f, True)]]
 
-        Rule head body ->
-            (map (, False) body ++ [(head, True)]) : programToClauses ps
+stmtToClause (Rule hp bps, _) =
+    [ map (,False) bps ++ [(hp, True)] ]
+
+stmtToClause (Query _, _) =
+    []
+
