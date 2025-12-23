@@ -1,6 +1,7 @@
 module Unify (mgu, applyUnifier, reduceArg) where
 
 import  Types
+import Data.List (reverse)
 
 mgu :: FuncApplication -> FuncApplication -> Maybe Unifier
 mgu (FuncApp p1 as1) (FuncApp p2 as2)
@@ -12,7 +13,7 @@ mgu (FuncApp p1 as1) (FuncApp p2 as2)
             zs = zip as1 as2
             rs = reduceArg zs
             czs = correctType (correctWay rs)
-            as = correctAmount [] czs
+            as = correctAmount [] (reverse czs)
 
 reduceArg :: [(Argument, Argument)] -> [(Argument, Argument)]
 reduceArg [] = []
@@ -45,31 +46,45 @@ correctType ((Const cs, a):rs) = (cs, a) : correctType rs
 correctAmount :: [(String, Argument)] -> [(String, Argument)] -> [(String, Argument)]
 correctAmount rs [] = rs
 correctAmount [] (a:as) = correctAmount [a] as
-correctAmount rs (a:as)
+correctAmount rs (a@(cs, Const ccs):as)
     | any f rs = correctAmount rs as
     | all i rs = correctAmount (a:rs) as
     | otherwise = []
         where
             f = sameSus a
             i = invalidAssignment a
+correctAmount rs (a@(cs, Arg ccs):as)
+    | any f rs = mergeArg rs a
+    | all i rs = correctAmount (a:rs) as
+    | otherwise = []
+        where
+            f = canMerge a
+            i = invalidAssignment a
 
--- make two different same sus one for arg and one for const
 sameSus :: (String, Argument) -> (String, Argument) -> Bool
-sameSus (c1s, Const a1s) (c2s, Const a2s)
+sameSus (c1s, a1s) (c2s, a2s)
     | c1s /= c2s = False
-    | a1s /= a2s = False
+    | argName a1s /= argName a2s = False
     | otherwise = True
-sameSus (c1s, Arg a1s) (c2s, Arg a2s)
-    | c1s /= c2s = False
-    | a1s /= a2s = False
-    | otherwise = True
+
+canMerge :: (String, Argument) -> (String, Argument) -> Bool
+canMerge (c1s, _) (c2s, _)
+    | c1s == c2s = True
+    | otherwise = False
+
+argName :: Argument -> String
+argName (Arg s)   = s
+argName (Const s) = s
+
+mergeArg :: [(String, Argument)] -> (String, Argument) -> [(String, Argument)]
+mergeArg [] sa = [sa]
+mergeArg (sa@(c1s, a1):sas) s2a@(c2s, a2)
+    | c1s == c2s = sa: (argName a2, a1) : sas
+    | otherwise = sa : mergeArg sas s2a
 
 invalidAssignment :: (String, Argument) -> (String, Argument) -> Bool
-invalidAssignment (c1s, Const a1s) (c2s, Const a2s)
-    | c1s == c2s && a1s /= a2s = False
-    | otherwise = True
-invalidAssignment (c1s, Arg a1s) (c2s, Arg a2s)
-    | c1s == c2s && a1s /= a2s = False
+invalidAssignment (c1s, a1s) (c2s, a2s)
+    | c1s == c2s && argName a1s /= argName a2s = False
     | otherwise = True
 
 applyUnifier :: Unifier -> FuncApplication -> FuncApplication

@@ -37,5 +37,13 @@ main = do
     let t1b = FuncApp "f" [Arg "X", Arg "Y"]
     printTest "simple variable binding" t1a t1b
 
+    let t1a = FuncApp "f" [Arg "A", Arg "A"]
+    let t1b = FuncApp "f" [Arg "X", Arg "y"]
+    printTest "simple variable binding" t1a t1b
+
+    let t1a = FuncApp "f" [Arg "A", Arg "C", Arg "E", Arg "E", Arg "C"]
+    let t1b = FuncApp "f" [Arg "B", Arg "D",  Arg "D", Const "f",  Arg "B"]
+    printTest "simple variable binding" t1a t1b
+
     let u = [(Arg "X", Const "b")]
     printTest2 "rarg" u
