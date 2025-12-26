@@ -1,6 +1,6 @@
 module Main where
 
-import Unify
+import Unify2
 import Types
 
 -- Pretty print helper
@@ -10,13 +10,6 @@ printTest name a b = do
     putStrLn ("  " ++ show a)
     putStrLn ("  " ++ show b)
     putStrLn ("  mgu = " ++ show (mgu a b))
-    putStrLn ""
-
-printTest2 :: String -> [(Argument, Argument)] -> IO ()
-printTest2 name a = do
-    putStrLn ("Test: " ++ name)
-    putStrLn ("  " ++ show a)
-    putStrLn ("  reduceArg = " ++ show (reduceArg a))
     putStrLn ""
 
 main :: IO ()
@@ -44,6 +37,3 @@ main = do
     let t1a = FuncApp "f" [Arg "A", Arg "C", Arg "E", Arg "E", Arg "C"]
     let t1b = FuncApp "f" [Arg "B", Arg "D",  Arg "D", Const "f",  Arg "B"]
     printTest "simple variable binding" t1a t1b
-
-    let u = [(Arg "X", Const "b")]
-    printTest2 "rarg" u
