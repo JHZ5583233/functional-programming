@@ -1,6 +1,6 @@
 module Main where
 
-import Unify2
+import Unify
 import Types
 
 -- Pretty print helper

@@ -1,7 +1,6 @@
 module Unify2 (mgu, applyUnifier) where
 
 import  Types
-import Data.List (reverse)
 
 mgu :: FuncApplication -> FuncApplication -> Maybe Unifier
 mgu (FuncApp p1 as1) (FuncApp p2 as2)
