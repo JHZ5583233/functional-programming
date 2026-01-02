@@ -9,12 +9,40 @@ mgu (FuncApp p1 as1) (FuncApp p2 as2)
     | length as1 /= length as2 = Nothing
     | any incorrectAssignment zs = Nothing
     | null rs = Just []
+    | invalid rs = Nothing
     | otherwise = Just (correctType ras)
         where
             zs = zip as1 as2
             rs = reduceConstConst zs
-            us = unify [] rs
+            ds = reduceDuplicate rs
+            us = unify [] ds
             ras = replace [] us
+
+invalid :: [(Argument, Argument)] -> Bool
+invalid [] = False
+invalid (a@(Arg _, Const _):as) = invalidHelp as a || invalid as
+invalid (_:as) = invalid as
+
+invalidHelp :: [(Argument, Argument)] -> (Argument, Argument) -> Bool
+invalidHelp [] _ = False
+invalidHelp ((Arg a1, Const a2):as) ar@(Arg ar1, Const ar2)
+    | a1 == ar1 && a2 /= ar2 = True
+    | otherwise = invalidHelp as ar
+invalidHelp (_:as) ar = invalidHelp as ar
+
+isElem :: [(Argument, Argument)] -> (Argument, Argument) -> Bool
+isElem [] _ = False
+isElem ((a1, a2):as) ar@(ar1, ar2)
+    | argName a1 == argName ar1 && argName a2 == argName ar2 = True
+    | otherwise = isElem as ar
+
+reduceDuplicate :: [(Argument, Argument)] -> [(Argument, Argument)]
+reduceDuplicate [] = []
+reduceDuplicate (a:as)
+    | d = reduceDuplicate as
+    | otherwise = a : reduceDuplicate as
+        where
+            d = isElem as a
 
 argName :: Argument -> String
 argName (Arg s)   = s
@@ -27,6 +55,9 @@ incorrectAssignment _ = False
 reduceConstConst :: [(Argument, Argument)] -> [(Argument, Argument)]
 reduceConstConst [] = []
 reduceConstConst ((Const _, Const _):as) = reduceConstConst as
+reduceConstConst (a@(Arg a1, Arg a2):as)
+    |a1 == a2 = reduceConstConst as
+    | otherwise = a : reduceConstConst as
 reduceConstConst (a:as) = a : reduceConstConst as
 
 correctType :: [(Argument, Argument)] -> [(String, Argument)]

@@ -18,6 +18,10 @@ main = do
     let t1b = FuncApp "f" [Arg "B", Arg "D",  Arg "D", Const "f",  Arg "B"]
     printTest "simple variable binding" t1a t1b
 
-    let t1a = FuncApp "f" [Arg "A", Arg "C", Arg "E", Arg "E", Arg "C", Arg "E"]
-    let t1b = FuncApp "f" [Arg "B", Arg "D",  Arg "D", Const "f",  Arg "B", Const "g"]
+    let t1a = FuncApp "f" [Arg "A", Arg "C", Arg "E", Arg "E",    Arg "C", Arg "E"]
+    let t1b = FuncApp "f" [Arg "B", Arg "D", Arg "D", Const "f",  Arg "B", Const "g"]
+    printTest "simple variable binding" t1a t1b
+
+    let t1a = FuncApp "f" [Arg "A", Arg "C", Arg "E", Arg "E",    Arg "C", Arg "E",   Arg "A", Arg "C"]
+    let t1b = FuncApp "f" [Arg "B", Arg "D", Arg "D", Const "f",  Arg "B", Const "f", Arg "A", Arg "D"]
     printTest "simple variable binding" t1a t1b
