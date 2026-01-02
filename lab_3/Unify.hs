@@ -1,7 +1,6 @@
 module Unify (mgu, applyUnifier) where
 
 import  Types
-import Types (Argument)
 
 mgu :: FuncApplication -> FuncApplication -> Maybe Unifier
 mgu (FuncApp p1 as1) (FuncApp p2 as2)
@@ -36,8 +35,6 @@ correctType ((a1, a2):as) = (argName a1, a2) : correctType as
 unify :: [(Argument, Argument)] -> [(Argument, Argument)] -> [(Argument, Argument)]
 unify [] (a:as) = unify [a] as
 unify rs [] = rs
-
-indUnify :: [(Argument, Argument)] -> (Argument, Argument) -> [(Argument, Argument)]
 
 applyUnifier :: Unifier -> FuncApplication -> FuncApplication
 applyUnifier us (FuncApp cs as) = FuncApp cs pas
