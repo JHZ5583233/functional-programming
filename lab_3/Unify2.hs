@@ -6,7 +6,7 @@ mgu :: FuncApplication -> FuncApplication -> Maybe Unifier
 mgu (FuncApp p1 as1) (FuncApp p2 as2)
     | p1 /= p2 = Nothing
     | length as1 /= length as2 = Nothing
-    | null rs = Nothing
+    | null rs = Just []
     | otherwise = Just cs
         where
             zs = zip as1 as2

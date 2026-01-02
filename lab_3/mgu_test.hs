@@ -19,6 +19,10 @@ main = do
     printTest "simple variable binding" t1a t1b
 
     let t1a = FuncApp "f" [Const "a"]
+    let t1b = FuncApp "f" [Const "b"]
+    printTest "simple variable binding" t1a t1b
+
+    let t1a = FuncApp "f" [Const "a"]
     let t1b = FuncApp "g" [Const "a"]
     printTest "simple variable binding" t1a t1b
 
