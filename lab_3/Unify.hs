@@ -1,6 +1,7 @@
 module Unify (mgu, applyUnifier) where
 
-import  Types
+import Types
+import Data.Maybe (isNothing, fromJust)
 
 mgu :: FuncApplication -> FuncApplication -> Maybe Unifier
 mgu (FuncApp p1 as1) (FuncApp p2 as2)
@@ -8,11 +9,12 @@ mgu (FuncApp p1 as1) (FuncApp p2 as2)
     | length as1 /= length as2 = Nothing
     | any incorrectAssignment zs = Nothing
     | null rs = Just []
-    | otherwise = Just cs
+    | otherwise = Just (correctType ras)
         where
             zs = zip as1 as2
             rs = reduceConstConst zs
-            cs = correctType rs
+            us = unify [] rs
+            ras = replace [] us
 
 argName :: Argument -> String
 argName (Arg s)   = s
@@ -32,9 +34,52 @@ correctType [] = []
 correctType ((c@(Const _), a):rs) = (argName a, c) : correctType rs
 correctType ((a1, a2):as) = (argName a1, a2) : correctType as
 
+canMerge :: [(Argument, Argument)] -> (Argument, Argument) -> Bool
+canMerge [] _ = False
+canMerge ((a1, a2):as) ar@(ar1, ar2)
+    | argName a1 == argName ar1 = True
+    | otherwise = canMerge as ar
+
 unify :: [(Argument, Argument)] -> [(Argument, Argument)] -> [(Argument, Argument)]
-unify [] (a:as) = unify [a] as
 unify rs [] = rs
+unify rs (a:as)
+    | isNothing ms = unify (a:rs) as
+    | otherwise = unify [] (fromJust ms ++ as)
+    where
+        ms = indUnify rs a
+
+indUnify :: [(Argument, Argument)] -> (Argument, Argument) -> Maybe [(Argument, Argument)]
+indUnify as a
+    | m = Just (indUnifyHelp as a)
+    | otherwise = Nothing
+    where
+        m = canMerge as a
+
+indUnifyHelp :: [(Argument, Argument)] -> (Argument, Argument) -> [(Argument, Argument)]
+indUnifyHelp [] _ = []
+indUnifyHelp (a@(a1, a2):as) ar@(ar1, ar2)
+    | argName a1 == argName ar1 = (a1, ar2) : (a2, ar2) : indUnifyHelp as ar
+    | otherwise = a : indUnifyHelp as ar
+
+canReplace :: [(Argument, Argument)] -> (Argument, Argument) -> Bool
+canReplace [] _ = False
+canReplace ((a1, a2):as) ar@(ar1, ar2)
+    | argName a2 == argName ar1 = True
+    | otherwise = canMerge as ar
+
+replace :: [(Argument, Argument)] -> [(Argument, Argument)] ->  [(Argument, Argument)]
+replace rs [] = rs
+replace rs (a:as)
+    | r = replace [] (a:replaceHelp (rs ++ as) a)
+    | otherwise = replace (a:rs) as
+    where
+        r = canReplace (rs ++ as) a
+
+replaceHelp :: [(Argument, Argument)] -> (Argument, Argument) ->  [(Argument, Argument)]
+replaceHelp [] _ = []
+replaceHelp (a@(a1, a2):as) ar@(ar1, ar2)
+    | argName a2 == argName ar1 = (a1, ar2) : replaceHelp as ar
+    | otherwise = a:replaceHelp as ar
 
 applyUnifier :: Unifier -> FuncApplication -> FuncApplication
 applyUnifier us (FuncApp cs as) = FuncApp cs pas
