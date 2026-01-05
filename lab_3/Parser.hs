@@ -56,12 +56,17 @@ parseArgList (x:xs) = argument x : parseArgList xs
 args :: [(LexToken,Int)] -> ([Argument], [(LexToken,Int)])
 args [] = ([], [])
 args ((LparTok, n):xs)
-    | null rs = eofError
+    | null xs = eofError
     | null as = expectedError n "a literal"
+    | not (isValidArgToken (fst (head as))) = expectedError (snd (head as)) "a literal"
+    | null rs = eofError
     | otherwise = (parseArgList as, tail rs)
         where
             as = takeWhile (\x -> fst x /= RparTok) xs
             rs = dropWhile (\x -> fst x /= RparTok) xs
+            isValidArgToken (VarTok _) = True
+            isValidArgToken (IdentTok _) = True
+            isValidArgToken _ = False
 args ((_, n):xs) = expectedError n "an opening parenthesis"
 
 relation :: [(LexToken,Int)] -> (FuncApplication, [(LexToken,Int)])
