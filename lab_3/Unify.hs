@@ -10,7 +10,7 @@ mgu (FuncApp p1 as1) (FuncApp p2 as2)
     | any incorrectAssignment zs = Nothing
     | null rs = Just []
     | invalid rs = Nothing
-    | otherwise = Just (correctType ras)
+    | otherwise = Just (normalizeUnifier (correctType ras))
         where
             zs = zip as1 as2
             rs = reduceConstConst zs
@@ -125,7 +125,23 @@ subArgs us (Arg cs:as) = c : subArgs us as
         c = getConst cs us
 
 getConst :: String -> Unifier -> Argument
-getConst ss [] = Arg ss
-getConst ss ((cs, a):us)
-    | ss == cs = a
-    | otherwise = getConst ss us
+getConst ss us = getConst' ss us []
+
+getConst' :: String -> Unifier -> [String] -> Argument
+getConst' s _ visited | s `elem` visited = Arg s
+getConst' s [] _ = Arg s
+getConst' s ((cs, a):rest) visited
+    | s == cs = case a of
+        Arg s2 -> getConst' s2 (rest ++ filter ((/= cs) . fst) rest) (s:visited)
+        Const _ -> a
+    | otherwise = getConst' s rest visited
+
+normalizeUnifier :: Unifier -> Unifier
+normalizeUnifier us = map (\t@(v,a) -> (v, resolve a [])) us
+    where
+        resolve (Const c) _ = Const c
+        resolve (Arg s) visited
+            | s `elem` visited = Arg s
+            | otherwise = case lookup s us of
+                Nothing -> Arg s
+                Just a' -> resolve a' (s:visited)
