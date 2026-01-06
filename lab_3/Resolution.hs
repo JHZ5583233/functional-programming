@@ -8,8 +8,9 @@ resolveClauses cs = cs ++ resolveHelp rs fs
         rs = [x | x <- cs, length x > 1]
         fs = [x | x <- cs, length x == 1]
 
-resolveHelp :: [Clause] -> [Clause] -> [Clause]
+resolveHelp :: Clauses -> Clauses -> Clauses
 resolveHelp _ [] = []
 resolveHelp rs (f:fs) = []
 
-applyRule :: [Clause] -> Clause -> Maybe [Clause]
+applyRule :: Clauses -> Clause -> Maybe Clauses
+applyRule _ _ = Nothing
