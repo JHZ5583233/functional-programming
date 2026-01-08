@@ -14,9 +14,13 @@ removeDuplicates :: Clauses -> Clauses
 removeDuplicates [] = []
 removeDuplicates (c:cs) = c : removeDuplicates (filter (not . clausesEqual c) cs)
     where
-        clausesEqual a b = length a == length b && and (zipWith literalEqual a b)
-        literalEqual (f1, p1) (f2, p2) = funcEqual f1 f2 && p1 == p2
-        funcEqual (FuncApp n1 args1) (FuncApp n2 args2) = n1 == n2 && length args1 == length args2 && and (zipWith argEqual args1 args2)
+        clausesEqual a b =
+            length a == length b && and (zipWith literalEqual a b)
+        literalEqual (f1, p1) (f2, p2) =
+            funcEqual f1 f2 && p1 == p2
+        funcEqual (FuncApp n1 args1) (FuncApp n2 args2) =
+            n1 == n2 && length args1 == length args2 &&
+            and (zipWith argEqual args1 args2)
         argEqual (Const s1) (Const s2) = s1 == s2
         argEqual (Arg s1) (Arg s2) = s1 == s2
         argEqual _ _ = False
@@ -65,9 +69,12 @@ applyRule r f
         ruleFuncs = extractFunc r
         unifiers = [mgu queryFunc x | x <- ruleFuncs]
         cs = [y | y <- unifiers, isJust y]
-        nonMatchingPairs = [x | (x, u) <- zip r unifiers, isNothing u]
+        nonMatchingPairs =
+            [x | (x, u) <- zip r unifiers, isNothing u]
         unifiedSubst = concat (catMaybes unifiers)
-        result = [[(applyUnifier unifiedSubst x, y) | (x, y) <- nonMatchingPairs]]
+        result =
+            [[(applyUnifier unifiedSubst x, y) |
+              (x, y) <- nonMatchingPairs]]
 
 extractFunc :: Clause -> [FuncApplication]
 extractFunc [] = []
