@@ -2,6 +2,7 @@ module Resolution (resolveClauses) where
 
 import Types
 import Unify
+import Data.Maybe (isNothing, catMaybes, isJust)
 
 resolveClauses :: Clauses -> Clauses
 resolveClauses cs = cs ++ resolveHelp rs fs
@@ -11,30 +12,32 @@ resolveClauses cs = cs ++ resolveHelp rs fs
 
 resolveHelp :: Clauses -> Clauses -> Clauses
 resolveHelp _ [] = []
-resolveHelp rs (f:fs) = cs ++ resolveClauses rs fs
+resolveHelp rs (f:fs) = cs ++ resolveHelp rs fs
     where
-        cs = applyRule rs f
+        cs = applyRules rs f
 
 applyRules :: Clauses -> Clause -> Clauses
 applyRules [] _ = []
-applyRules (r:rs) fs
-    | isNothing cs = resolveClauses rs fs
-    | otherwise = cs ++ resolveClauses rs fs
+applyRules (r:rs) f
+    | isNothing cs = applyRules rs f
+    | otherwise = (extractJust cs) ++ applyRules rs f
     where
-        cs = applyRule r fs
+        cs = applyRule r f
+        extractJust (Just x) = x
+        extractJust Nothing = []
 
 applyRule :: Clause -> Clause -> Maybe Clauses
-applyRule rs fs
+applyRule r f
     | null cs = Nothing
-    | otherwise = rs
+    | otherwise = Just result
     where
-        f = head (extractFunc fs)
-        fus = extractFunc rs
-        us = [mgu f x | x <- fus]
-        cs = [y | y <- us, not (isNothing y)]
-        ffus = [x | (x, u) <- zip rs us, isNothing u]
-        uus = concat cs
-        rs = [(applyUnifier uus x, y) | (x, y) <- ffus]
+        queryFunc = head (extractFunc f)
+        ruleFuncs = extractFunc r
+        unifiers = [mgu queryFunc x | x <- ruleFuncs]
+        cs = [y | y <- unifiers, isJust y]
+        nonMatchingPairs = [x | (x, u) <- zip r unifiers, isNothing u]
+        unifiedSubst = concat (catMaybes unifiers)
+        result = [[(applyUnifier unifiedSubst x, y) | (x, y) <- nonMatchingPairs]]
 
 extractFunc :: Clause -> [FuncApplication]
 extractFunc [] = []
