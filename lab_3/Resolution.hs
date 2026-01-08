@@ -5,10 +5,21 @@ import Unify
 import Data.Maybe (isNothing, catMaybes, isJust)
 
 resolveClauses :: Clauses -> Clauses
-resolveClauses cs = cs ++ resolveHelp rs fs
+resolveClauses cs = removeDuplicates (cs ++ resolveHelp rs fs)
     where
         rs = [x | x <- cs, length x > 1]
         fs = [x | x <- cs, length x == 1]
+
+removeDuplicates :: Clauses -> Clauses
+removeDuplicates [] = []
+removeDuplicates (c:cs) = c : removeDuplicates (filter (not . clausesEqual c) cs)
+  where
+    clausesEqual a b = length a == length b && and (zipWith literalEqual a b)
+    literalEqual (f1, p1) (f2, p2) = funcEqual f1 f2 && p1 == p2
+    funcEqual (FuncApp n1 args1) (FuncApp n2 args2) = n1 == n2 && length args1 == length args2 && and (zipWith argEqual args1 args2)
+    argEqual (Const s1) (Const s2) = s1 == s2
+    argEqual (Arg s1) (Arg s2) = s1 == s2
+    argEqual _ _ = False
 
 resolveHelp :: Clauses -> Clauses -> Clauses
 resolveHelp _ [] = []
