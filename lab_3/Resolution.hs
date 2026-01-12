@@ -1,4 +1,4 @@
-module Resolution (resolveClauses, argIter, makeAllFacts) where
+module Resolution (resolveClauses) where
 
 import Types
 import Unify
@@ -29,12 +29,7 @@ resolveHelp :: Clauses -> Clauses -> Clauses
 resolveHelp _ [] = []
 resolveHelp rs (f:fs) = cs ++ resolveHelp rs fs
     where
-        cs = applyAllFact rs f
-
-applyAllFact :: Clauses -> Clause -> Clauses
-applyAllFact rs f = concat [applyRules rs x | x <- fs]
-    where
-        fs = makeAllFacts f
+        cs = applyRules rs f
 
 applyRules :: Clauses -> Clause -> Clauses
 applyRules [] _ = []
@@ -46,10 +41,15 @@ applyRules (r:rs) f
         extractJust (Just x) = x
         extractJust Nothing = []
 
+applyAllFact :: Clauses -> Clause -> Clauses
+applyAllFact rs f = concat [applyRules rs x | x <- fs]
+    where
+        fs = makeAllFacts f
+
 makeAllFacts :: Clause -> Clauses
 makeAllFacts ((FuncApp ss as, b):cs) = [[(FuncApp ss x, b)] | x <- fcoms]
     where
-        coms = (argIter as)
+        coms = argIter as
         fcoms = take (length coms - 1) coms
 
 argName :: Argument -> String
@@ -63,6 +63,7 @@ argIter (a:as) = [x : y | x <- [a, Arg (argName a ++ "x")], y <- argIter as]
 applyRule :: Clause -> Clause -> Maybe Clauses
 applyRule r f
     | null cs = Nothing
+    | length nonMatchingpairs > 1 = applyAllFact r f
     | otherwise = Just result
     where
         queryFunc = head (extractFunc f)
