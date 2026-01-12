@@ -10,11 +10,25 @@ resolveClauses = fixpoint
   where
     fixpoint clauses =
       let rs = [x | x <- clauses, length x > 1]
-          fs = [x | x <- clauses, length x == 1]
-          newClauses = removeDuplicates (clauses ++ resolveHelp rs fs)
+          newClauses = removeDuplicates (map normalizeClause (clauses ++ resolveHelp rs clauses))
       in if length newClauses == length clauses
          then newClauses
          else fixpoint newClauses
+
+normalizeClause :: Clause -> Clause
+normalizeClause = removeDupLiterals
+  where
+    removeDupLiterals [] = []
+    removeDupLiterals (l:ls) = l : removeDupLiterals (filter (not . literalEqual l) ls)
+
+    literalEqual (f1, p1) (f2, p2) =
+        funcEqual f1 f2 && p1 == p2
+    funcEqual (FuncApp n1 args1) (FuncApp n2 args2) =
+        n1 == n2 && length args1 == length args2 &&
+        and (zipWith argEqual args1 args2)
+    argEqual (Const s1) (Const s2) = s1 == s2
+    argEqual (Arg s1) (Arg s2) = s1 == s2
+    argEqual _ _ = False
 
 removeDuplicates :: Clauses -> Clauses
 removeDuplicates [] = []
@@ -82,7 +96,7 @@ applyRule r f
         results = [resolveAt matchIdx unifier | (matchIdx, unifier) <- matches]
 
         resolveAt matchIdx unifier =
-            let unifiedSubsts = case unifier of Just u -> u; Nothing -> []
+            let unifiedSubsts = Data.Maybe.fromMaybe [] unifier
                 remainingFromF = [(applyUnifier unifiedSubsts func, pol) | (func, pol) <- tail f]
                 remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
             in remainingFromF ++ remainingFromR
@@ -100,7 +114,7 @@ applyRuleAlt r f
 
         cs = matches
         (matchIdx, unifier) = head matches
-        unifiedSubsts = case unifier of Just u -> u; Nothing -> []
+        unifiedSubsts = Data.Maybe.fromMaybe [] unifier
 
         remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
 
