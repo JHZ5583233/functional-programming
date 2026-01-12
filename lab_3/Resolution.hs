@@ -41,8 +41,8 @@ applyRules (r:rs) f
         extractJust (Just x) = x
         extractJust Nothing = []
 
-applyAllFact :: Clause -> Clause -> Clauses
-applyAllFact r f = concat [applyRule r x | x <- fs]
+applyAllFact :: Clauses -> Clause -> Clauses
+applyAllFact rs f = concat (catMaybes [applyRule r x | r <- rs, x <- fs])
     where
         fs = makeAllFacts f
 
@@ -63,7 +63,7 @@ argIter (a:as) = [x : y | x <- [a, Arg (argName a ++ "x")], y <- argIter as]
 applyRule :: Clause -> Clause -> Maybe Clauses
 applyRule r f
     | null cs = Nothing
-    | length nonMatchingPairs > 1 = applyAllFact r f
+    | length nonMatchingPairs > 1 = Just (applyAllFact [r] f)
     | otherwise = Just result
     where
         queryFunc = head (extractFunc f)
