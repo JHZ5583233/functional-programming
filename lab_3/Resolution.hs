@@ -87,8 +87,9 @@ applyRuleAlt r f
         unifiers = [mgu queryFunc x | x <- ruleFuncs]
 
         cs = [y | y <- unifiers, isJust y]
+        nonMatchingPairs = [x | (x, u) <- zip r unifiers, isNothing u]
         unifiedSubsts = concat (catMaybes unifiers)
-        results = [[(applyUnifier unifiedSubsts x, y) | (x, y) <- cs]]
+        results = [[(applyUnifier unifiedSubsts x, y) | (x, y) <- nonMatchingPairs]]
 
 extractFunc :: Clause -> [FuncApplication]
 extractFunc [] = []
