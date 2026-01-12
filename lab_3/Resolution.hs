@@ -3,12 +3,18 @@ module Resolution (resolveClauses) where
 import Types
 import Unify
 import Data.Maybe (isNothing, catMaybes, isJust)
+import Data.List (find)
 
 resolveClauses :: Clauses -> Clauses
-resolveClauses cs = removeDuplicates (cs ++ resolveHelp rs fs)
-    where
-        rs = [x | x <- cs, length x > 1]
-        fs = [x | x <- cs, length x == 1]
+resolveClauses = fixpoint
+  where
+    fixpoint clauses =
+      let rs = [x | x <- clauses, length x > 1]
+          fs = [x | x <- clauses, length x == 1]
+          newClauses = removeDuplicates (clauses ++ resolveHelp rs fs)
+      in if length newClauses == length clauses
+         then newClauses
+         else fixpoint newClauses
 
 removeDuplicates :: Clauses -> Clauses
 removeDuplicates [] = []
@@ -66,33 +72,42 @@ applyRule r f
     | length r > 2 = Just (applyAllFact [r] f)
     | otherwise = Just results
     where
-        queryFunc = head (extractFunc f)
-        ruleFuncs = extractFunc r
+        (fFunc, fPol) = head f
+        matches = [(i, u) | (i, (rFunc, rPol)) <- zip [0..] r,
+                            rPol /= fPol,
+                            let u = mgu fFunc rFunc,
+                            isJust u]
 
-        unifiers = [mgu queryFunc x | x <- ruleFuncs]
+        cs = matches
+        (matchIdx, unifier) = head matches
+        unifiedSubsts = case unifier of Just u -> u; Nothing -> []
 
-        cs = [y | y <- unifiers, isJust y]
-        nonMatchingPairs = [x | (x, u) <- zip r unifiers, isNothing u]
-        unifiedSubsts = concat (catMaybes unifiers)
-        results = [[(applyUnifier unifiedSubsts x, y) | (x, y) <- nonMatchingPairs]]
+        remainingFromF = [(applyUnifier unifiedSubsts func, pol) | (func, pol) <- tail f]
+
+        remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
+
+        results = [remainingFromF ++ remainingFromR]
 
 applyRuleAlt :: Clause -> Clause -> Maybe Clauses
 applyRuleAlt r f
     | null cs = Nothing
     | otherwise = Just results
     where
-        queryFunc = head (extractFunc f)
-        ruleFuncs = extractFunc r
+        (fFunc, fPol) = head f
+        matches = [(i, u) | (i, (rFunc, rPol)) <- zip [0..] r,
+                            rPol /= fPol,
+                            let u = mgu fFunc rFunc,
+                            isJust u]
 
-        unifiers = [mgu queryFunc x | x <- ruleFuncs]
-        cs = [y | y <- unifiers, isJust y]
+        cs = matches
+        (matchIdx, unifier) = head matches
+        unifiedSubsts = case unifier of Just u -> u; Nothing -> []
 
-        i = length (takeWhile isNothing unifiers)
-        bs = take i r
-        es = tail (drop i r)
-        nonMatchingPairs = bs ++ es
-        unifiedSubsts = concat (catMaybes unifiers)
-        results = [[(applyUnifier unifiedSubsts x, y) | (x, y) <- nonMatchingPairs]]
+        remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
+
+        remainingFromF = [(applyUnifier unifiedSubsts func, pol) | (func, pol) <- tail f]
+
+        results = [remainingFromR ++ remainingFromF]
 
 extractFunc :: Clause -> [FuncApplication]
 extractFunc [] = []
