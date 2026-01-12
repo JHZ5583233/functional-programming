@@ -42,12 +42,12 @@ applyRules (r:rs) f
         extractJust Nothing = []
 
 applyAllFact :: Clauses -> Clause -> Clauses
-applyAllFact rs f = concat (catMaybes [applyRule r x | r <- rs, x <- fs])
+applyAllFact rs f = concat (catMaybes [applyRuleAlt r x | r <- rs, x <- fs])
     where
         fs = makeAllFacts f
 
 makeAllFacts :: Clause -> Clauses
-makeAllFacts ((FuncApp ss as, b):cs) = [[(FuncApp ss x, b)] | x <- fcoms]
+makeAllFacts ((FuncApp ss as, b):cs) = [(FuncApp ss x, b) : cs | x <- fcoms]
     where
         coms = argIter as
         fcoms = take (length coms - 1) coms
@@ -63,19 +63,32 @@ argIter (a:as) = [x : y | x <- [a, Arg (argName a ++ "x")], y <- argIter as]
 applyRule :: Clause -> Clause -> Maybe Clauses
 applyRule r f
     | null cs = Nothing
-    | length nonMatchingPairs > 1 = Just (applyAllFact [r] f)
-    | otherwise = Just result
+    | length r > 2 = Just (applyAllFact [r] f)
+    | otherwise = Just results
     where
         queryFunc = head (extractFunc f)
         ruleFuncs = extractFunc r
+
         unifiers = [mgu queryFunc x | x <- ruleFuncs]
+
         cs = [y | y <- unifiers, isJust y]
-        nonMatchingPairs =
-            [x | (x, u) <- zip r unifiers, isNothing u]
-        unifiedSubst = concat (catMaybes unifiers)
-        result =
-            [[(applyUnifier unifiedSubst x, y) |
-              (x, y) <- nonMatchingPairs]]
+        nonMatchingPairs = [x | (x, u) <- zip r unifiers, isNothing u]
+        unifiedSubsts = concat (catMaybes unifiers)
+        results = [[(applyUnifier unifiedSubsts x, y) | (x, y) <- nonMatchingPairs]]
+
+applyRuleAlt :: Clause -> Clause -> Maybe Clauses
+applyRuleAlt r f
+    | null cs = Nothing
+    | otherwise = Just results
+    where
+        queryFunc = head (extractFunc f)
+        ruleFuncs = extractFunc r
+
+        unifiers = [mgu queryFunc x | x <- ruleFuncs]
+
+        cs = [y | y <- unifiers, isJust y]
+        unifiedSubsts = concat (catMaybes unifiers)
+        results = [[(applyUnifier unifiedSubsts x, y) | (x, y) <- cs]]
 
 extractFunc :: Clause -> [FuncApplication]
 extractFunc [] = []
