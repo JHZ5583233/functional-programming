@@ -1,3 +1,6 @@
 mortal(X) :- man(X).
 man(socrates).
+mortal(pyhtagoras).
 ?- mortal(socrates).
+?- mortal(zeus).
+?- mortal(X).

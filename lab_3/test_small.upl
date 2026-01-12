@@ -1,0 +1,4 @@
+bigger(a, b).
+isBigger(X,Y) :- bigger(X,Y).
+isBigger(X, Y) :- bigger(X, Z), bigger(Z, Y).
+?-isBigger(a,Y).
