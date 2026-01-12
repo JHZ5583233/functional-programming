@@ -69,7 +69,6 @@ argIter (a:as) = [x : y | x <- [a, Arg (argName a ++ "x")], y <- argIter as]
 applyRule :: Clause -> Clause -> Maybe Clauses
 applyRule r f
     | null cs = Nothing
-    | length r > 2 = Just (applyAllFact [r] f)
     | otherwise = Just results
     where
         (fFunc, fPol) = head f
@@ -79,14 +78,14 @@ applyRule r f
                             isJust u]
 
         cs = matches
-        (matchIdx, unifier) = head matches
-        unifiedSubsts = case unifier of Just u -> u; Nothing -> []
 
-        remainingFromF = [(applyUnifier unifiedSubsts func, pol) | (func, pol) <- tail f]
+        results = [resolveAt matchIdx unifier | (matchIdx, unifier) <- matches]
 
-        remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
-
-        results = [remainingFromF ++ remainingFromR]
+        resolveAt matchIdx unifier =
+            let unifiedSubsts = case unifier of Just u -> u; Nothing -> []
+                remainingFromF = [(applyUnifier unifiedSubsts func, pol) | (func, pol) <- tail f]
+                remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
+            in remainingFromF ++ remainingFromR
 
 applyRuleAlt :: Clause -> Clause -> Maybe Clauses
 applyRuleAlt r f
