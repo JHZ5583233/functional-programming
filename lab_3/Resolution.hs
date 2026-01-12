@@ -2,7 +2,7 @@ module Resolution (resolveClauses) where
 
 import Types
 import Unify
-import Data.Maybe (isNothing, catMaybes, isJust)
+import Data.Maybe (isNothing, catMaybes, isJust, fromMaybe)
 import Data.List (find)
 
 resolveClauses :: Clauses -> Clauses
@@ -96,7 +96,7 @@ applyRule r f
         results = [resolveAt matchIdx unifier | (matchIdx, unifier) <- matches]
 
         resolveAt matchIdx unifier =
-            let unifiedSubsts = Data.Maybe.fromMaybe [] unifier
+            let unifiedSubsts = fromMaybe [] unifier
                 remainingFromF = [(applyUnifier unifiedSubsts func, pol) | (func, pol) <- tail f]
                 remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
             in remainingFromF ++ remainingFromR
@@ -114,7 +114,7 @@ applyRuleAlt r f
 
         cs = matches
         (matchIdx, unifier) = head matches
-        unifiedSubsts = Data.Maybe.fromMaybe [] unifier
+        unifiedSubsts = fromMaybe [] unifier
 
         remainingFromR = [(applyUnifier unifiedSubsts func, pol) | (i, (func, pol)) <- zip [0..] r, i /= matchIdx]
 
