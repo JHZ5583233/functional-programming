@@ -1,6 +1,7 @@
-child(sue,john).
-child(sam,john).
-child(sue,jane).
-male(john).
-male(peter).
-?-child(X,john).
+bigger(elephant, horse).
+bigger(horse, donkey).
+bigger(donkey, dog).
+bigger(donkey, monkey).
+isBigger(X,Y) :- bigger(X,Y).
+isBigger(X, Y) :- bigger(X, Z), bigger(Z, Y).
+?-isBigger(elephant,Y).

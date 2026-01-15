@@ -5,6 +5,7 @@ import Resolution
 import Clause
 import Types (Argument)
 import Data.String (String)
+import Data.List (sort)
 
 answerQueries :: Program -> String
 answerQueries ps = answerQueriesHelp qs cs
@@ -91,10 +92,11 @@ makeString (as:ass) = ss : makeString ass
 
 format :: [[String]] -> [String]
 format [] = []
-format xss = nubOrd (format' xss)
+format xss = sort (nubOrd (format' xss))
   where
     format' [] = []
     format' (ss:sss)
+        | null ss = format' sss
         | length ss == 1 = head ss : format' sss
         | otherwise = ("(" ++ concat (insertCommas ss) ++ ")") : format' sss
 
@@ -105,4 +107,4 @@ nubOrd (x:xs) = x : nubOrd (filter (/= x) xs)
 formatvars :: String -> String
 formatvars ss
     | length ss == 1 = ss
-    | otherwise = "(" ++ insertComma ss ++ ")"
+    | otherwise = "(" ++ insertComma (sort ss) ++ ")"
