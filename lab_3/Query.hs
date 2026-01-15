@@ -50,7 +50,7 @@ argsEqual (Arg a:as) (Arg b:bs) = a == b && argsEqual as bs
 argsEqual _ _ = False
 
 answerQueriesArg :: FuncApplication -> Clause -> String
-answerQueriesArg f@(FuncApp fname args) cs = show f ++ ": " ++ formatvars vars  ++ " <- [" ++ ms ++ "]\n"
+answerQueriesArg f@(FuncApp fname args) cs = show f ++ ": " ++ formatvars vars  ++ " <- [" ++ ms ++ "]"
     where
         vars = concatMap (\(Arg v) -> v) (filter isArg args)
         isArg (Arg _) = True
@@ -66,7 +66,8 @@ extractMatches fa@(FuncApp f args) ((FuncApp fc cArgs, _):cs)
 extractArguments :: [Argument] -> [Argument] -> [Argument]
 extractArguments _ [] = []
 extractArguments [] _ = []
-extractArguments (Arg _:as) (arg:cArgs) = arg : extractArguments as cArgs
+extractArguments (Arg _:as) (arg@(Const _):cArgs) = arg : extractArguments as cArgs
+extractArguments (Arg _:as) (arg@(Arg _):cArgs) = extractArguments as cArgs
 extractArguments (Const _:as) (_:cArgs) = extractArguments as cArgs
 
 insertComma :: String -> String
@@ -90,9 +91,16 @@ makeString (as:ass) = ss : makeString ass
 
 format :: [[String]] -> [String]
 format [] = []
-format (ss:sss)
-    | length ss == 1 = head ss : format sss
-    | otherwise = ("(" ++ concat (insertCommas ss) ++ ")") : format sss
+format xss = nubOrd (format' xss)
+  where
+    format' [] = []
+    format' (ss:sss)
+        | length ss == 1 = head ss : format' sss
+        | otherwise = ("(" ++ concat (insertCommas ss) ++ ")") : format' sss
+
+nubOrd :: Eq a => [a] -> [a]
+nubOrd [] = []
+nubOrd (x:xs) = x : nubOrd (filter (/= x) xs)
 
 formatvars :: String -> String
 formatvars ss
