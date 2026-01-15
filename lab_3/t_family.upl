@@ -4,4 +4,4 @@ bigger(donkey, dog).
 bigger(donkey, monkey).
 isBigger(X,Y) :- bigger(X,Y).
 isBigger(X, Y) :- bigger(X, Z), bigger(Z, Y).
-?-isBigger(elephant,Y).
+?-isBigger(X,Y).

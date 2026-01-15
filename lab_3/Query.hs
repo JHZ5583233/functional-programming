@@ -56,7 +56,8 @@ answerQueriesArg f@(FuncApp fname args) cs = show f ++ ": " ++ formatvars vars  
         vars = concatMap (\(Arg v) -> v) (filter isArg args)
         isArg (Arg _) = True
         isArg _ = False
-        ms = concat (insertCommas (format (makeString (extractMatches f cs))))
+        numVars = length (filter isArg args)
+        ms = concat (insertCommas (format numVars (makeString (extractMatches f cs))))
 
 extractMatches :: FuncApplication -> Clause -> [[Argument]]
 extractMatches _ [] = []
@@ -90,13 +91,14 @@ makeString (as:ass) = ss : makeString ass
 
         ss = map eArg as
 
-format :: [[String]] -> [String]
-format [] = []
-format xss = sort (nubOrd (format' xss))
+format :: Int -> [[String]] -> [String]
+format _ [] = []
+format numVars xss = sort (nubOrd (format' xss))
   where
     format' [] = []
     format' (ss:sss)
         | null ss = format' sss
+        | length ss /= numVars = format' sss
         | length ss == 1 = head ss : format' sss
         | otherwise = ("(" ++ concat (insertCommas ss) ++ ")") : format' sss
 
