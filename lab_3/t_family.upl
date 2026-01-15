@@ -1,0 +1,8 @@
+child(victor,john).
+child(victor,anne).
+child(sue,john).
+child(sam,john).
+child(sue,jane).
+male(john).
+male(peter).
+?-child(X,Y).

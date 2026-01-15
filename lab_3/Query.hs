@@ -3,9 +3,10 @@ module Query (answerQueries) where
 import Types
 import Resolution
 import Clause
+import Types (FuncApplication(FuncApp), Argument)
 
 answerQueries :: Program -> String
-answerQueries ps = concatMap (`answerQueriesConst` cs) qs
+answerQueries ps = answerQueriesHelp qs cs
     where
         qs = getQueries ps
         cs = concat (resolveClauses (programToClauses ps))
@@ -22,6 +23,12 @@ hasArguments (FuncApp _ as) = d as
         d [] = False
         d (Arg _ : as) = True
         d (_:as) = d as
+
+answerQueriesHelp :: [FuncApplication] -> Clause -> String
+answerQueriesHelp [] _ = ""
+answerQueriesHelp (f:fs) cs
+    | hasArguments f = answerQueriesArg f cs ++ answerQueriesHelp fs cs
+    | otherwise = answerQueriesConst f cs ++ answerQueriesHelp fs cs
 
 answerQueriesConst :: FuncApplication -> Clause -> String
 answerQueriesConst f cs
@@ -40,3 +47,27 @@ argsEqual [] [] = True
 argsEqual (Const a:as) (Const b:bs) = a == b && argsEqual as bs
 argsEqual (Arg a:as) (Arg b:bs) = a == b && argsEqual as bs
 argsEqual _ _ = False
+
+answerQueriesArg :: FuncApplication -> Clause -> String
+answerQueriesArg f@(FuncApp fname args) cs = fname ++ "(" ++ vars ++ "): (" ++ insertComma vars ++ ")  <- " ++ "\n"
+    where
+        vars = concatMap (\(Arg v) -> v) (filter isArg args)
+        isArg (Arg _) = True
+        isArg _ = False
+
+extractMatches :: FuncApplication -> Clause -> [[Argument]]
+extractMatches _ [] = []
+extractMatches fa@(FuncApp f args) ((FuncApp fc cArgs, _):cs)
+    | f /= fc = extractMatches fa cs
+    | otherwise = extractArguments args cArgs : extractMatches fa cs
+
+extractArguments :: [Argument] -> [Argument] -> [Argument]
+extractArguments _ [] = []
+extractArguments [] _ = []
+extractArguments (Arg _:as) (arg:cArgs) = arg : extractArguments as cArgs
+extractArguments (Const _:as) (_:cArgs) = extractArguments as cArgs
+
+insertComma :: String -> String
+insertComma [] = []
+insertComma [c] = [c]
+insertComma (c : cs@(cc :ccs)) = c : ',' : insertComma cs
