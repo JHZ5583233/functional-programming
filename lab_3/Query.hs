@@ -3,7 +3,8 @@ module Query (answerQueries) where
 import Types
 import Resolution
 import Clause
-import Types (FuncApplication(FuncApp), Argument)
+import Types (Argument)
+import Data.String (String)
 
 answerQueries :: Program -> String
 answerQueries ps = answerQueriesHelp qs cs
@@ -49,11 +50,12 @@ argsEqual (Arg a:as) (Arg b:bs) = a == b && argsEqual as bs
 argsEqual _ _ = False
 
 answerQueriesArg :: FuncApplication -> Clause -> String
-answerQueriesArg f@(FuncApp fname args) cs = fname ++ "(" ++ vars ++ "): (" ++ insertComma vars ++ ")  <- " ++ "\n"
+answerQueriesArg f@(FuncApp fname args) cs = show f ++ ": " ++ formatvars vars  ++ " <- [" ++ ms ++ "]\n"
     where
         vars = concatMap (\(Arg v) -> v) (filter isArg args)
         isArg (Arg _) = True
         isArg _ = False
+        ms = concat (insertCommas (format (makeString (extractMatches f cs))))
 
 extractMatches :: FuncApplication -> Clause -> [[Argument]]
 extractMatches _ [] = []
@@ -71,3 +73,28 @@ insertComma :: String -> String
 insertComma [] = []
 insertComma [c] = [c]
 insertComma (c : cs@(cc :ccs)) = c : ',' : insertComma cs
+
+insertCommas :: [String] -> [String]
+insertCommas [] = []
+insertCommas [c] = [c]
+insertCommas (c : cs) = c : "," : insertCommas cs
+
+makeString :: [[Argument]] -> [[String]]
+makeString [] = []
+makeString (as:ass) = ss : makeString ass
+    where
+        eArg (Arg a) = a
+        eArg (Const a) = a
+
+        ss = map eArg as
+
+format :: [[String]] -> [String]
+format [] = []
+format (ss:sss)
+    | length ss == 1 = head ss : format sss
+    | otherwise = ("(" ++ concat (insertCommas ss) ++ ")") : format sss
+
+formatvars :: String -> String
+formatvars ss
+    | length ss == 1 = ss
+    | otherwise = "(" ++ insertComma ss ++ ")"
