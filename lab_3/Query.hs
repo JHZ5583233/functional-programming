@@ -63,14 +63,23 @@ extractMatches :: FuncApplication -> Clause -> [[Argument]]
 extractMatches _ [] = []
 extractMatches fa@(FuncApp f args) ((FuncApp fc cArgs, _):cs)
     | f /= fc = extractMatches fa cs
+    | hasVar cArgs = extractMatches fa cs
     | otherwise = extractArguments args cArgs : extractMatches fa cs
+  where
+    isVariable (Arg _) = True
+    isVariable (Const _) = False
+    hasVar = any isVariable
 
 extractArguments :: [Argument] -> [Argument] -> [Argument]
-extractArguments _ [] = []
+extractArguments [] [] = []
 extractArguments [] _ = []
+extractArguments _ [] = []
+extractArguments (Const a:as) (Const b:cArgs)
+    | a == b = extractArguments as cArgs
+    | otherwise = []
+extractArguments (Const _:_) _ = []
 extractArguments (Arg _:as) (arg@(Const _):cArgs) = arg : extractArguments as cArgs
-extractArguments (Arg _:as) (arg@(Arg _):cArgs) = extractArguments as cArgs
-extractArguments (Const _:as) (_:cArgs) = extractArguments as cArgs
+extractArguments (Arg _:as) (_:cArgs) = extractArguments as cArgs
 
 insertComma :: String -> String
 insertComma [] = []

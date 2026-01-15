@@ -1,7 +1,9 @@
-bigger(elephant, horse).
-bigger(horse, donkey).
-bigger(donkey, dog).
-bigger(donkey, monkey).
-isBigger(X,Y) :- bigger(X,Y).
-isBigger(X, Y) :- bigger(X, Z), bigger(Z, Y).
-?-isBigger(X,Y).
+child(john,sue).  % sue is a child of john
+child(john,jane). % jane is a child of john
+child(sue,peter). % peter is a child of sue
+female(sue). 
+female(jane).
+parent(X,Y) :- child(X,Y). % X is a parent of Y
+sister(X,Y):-parent(Z,X),parent(Z,Y),female(X).
+aunt(X, Z) :-sister(X, Y),parent(Y, Z).
+?-aunt(X,Y).
